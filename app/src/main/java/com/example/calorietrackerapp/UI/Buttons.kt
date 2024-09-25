@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.sp
 
 @Preview
 @Composable
-fun rectangularButton(){
+fun rectangularButtonPreview(){
     Button(
         onClick = {},
         shape = RectangleShape,
@@ -42,7 +42,7 @@ fun rectangularButton(){
 
 @Preview
 @Composable
-fun roundedButton(){
+fun roundedButtonPreview(){
     Button(
         onClick = {},
         modifier = Modifier
@@ -61,10 +61,9 @@ fun roundedButton(){
     }
 }
 
-
 @Preview
 @Composable
-fun circleButton(){
+fun circleButtonPreview(){
     Button(
         onClick = {},
         shape = CircleShape,
@@ -77,6 +76,69 @@ fun circleButton(){
     ) {
         Text(
             text = "ilikedick",
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Serif
+        )
+    }
+}
+
+@Composable
+fun rectangularButton(height: Float, width: Float, text: String, onClick: () -> Unit){
+    Button(
+        onClick = onClick,
+        shape = RectangleShape,
+        modifier = Modifier
+            .size(
+                width = width.dp,
+                height = height.dp
+            )
+            .padding(25.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Serif
+        )
+    }
+}
+
+
+@Composable
+fun roundedButton(height: Float, width: Float, text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .size(
+                width = width.dp,
+                height = height.dp
+            )
+            .padding(25.dp)
+    ) {
+        Text(
+            text = text,
+            fontSize = 25.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Serif
+        )
+    }
+}
+
+@Composable
+fun circleButton(height: Float, width: Float, text: String, onClick: () -> Unit){
+    Button(
+        onClick = onClick,
+        shape = CircleShape,
+        modifier = Modifier
+            .size(
+                width = width.dp,
+                height = height.dp
+            )
+            .padding(25.dp)
+    ) {
+        Text(
+            text = text,
             fontSize = 25.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
