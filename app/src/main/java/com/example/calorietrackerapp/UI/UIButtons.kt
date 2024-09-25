@@ -1,10 +1,8 @@
 package com.example.calorietrackerapp.UI
 
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,8 +24,8 @@ fun rectangularButtonPreview(){
         shape = RectangleShape,
         modifier = Modifier
             .size(
-                width = 250.dp,
-                height = 250.dp
+                width = 50.dp,
+                height = 50.dp
             )
             .padding(25.dp)
     ) {
@@ -47,8 +45,8 @@ fun roundedButtonPreview(){
         onClick = {},
         modifier = Modifier
             .size(
-                width = 500.dp,
-                height = 250.dp
+                width = 100.dp,
+                height = 50.dp
             )
             .padding(25.dp)
     ) {
@@ -69,8 +67,8 @@ fun circleButtonPreview(){
         shape = CircleShape,
         modifier = Modifier
             .size(
-                width = 250.dp,
-                height = 250.dp
+                width = 50.dp,
+                height = 50.dp
             )
             .padding(25.dp)
     ) {
@@ -97,7 +95,7 @@ fun rectangularButton(height: Float, width: Float, text: String, onClick: () -> 
     ) {
         Text(
             text = text,
-            fontSize = 25.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
         )
@@ -118,7 +116,7 @@ fun roundedButton(height: Float, width: Float, text: String, onClick: () -> Unit
     ) {
         Text(
             text = text,
-            fontSize = 25.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
         )
@@ -139,7 +137,7 @@ fun circleButton(height: Float, width: Float, text: String, onClick: () -> Unit)
     ) {
         Text(
             text = text,
-            fontSize = 25.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Serif
         )
