@@ -5,9 +5,12 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.calorietrackerapp.AppLogic.CalorieTrackerApp
+import com.example.calorietrackerapp.Database.DatabaseProvider
 import com.example.calorietrackerapp.UI.ScreenInfo.DailyCalorieIntakeScreen
 import com.example.calorietrackerapp.UI.ScreenInfo.FoodDetailScreen
 import com.example.calorietrackerapp.UI.ScreenInfo.MainMenuScreen
@@ -19,20 +22,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            var context = LocalContext.current
-            val filename: String = "HARHAR.txt"
-            val file = File(context.filesDir, filename)
-            val fileContents = "Hello world!32132131313 asduhsauidhsauidhsaudhasdsadhashdisuahdh"
-            writeToFile(context, filename, fileContents)
-            /*context.openFileOutput(filename, Context.MODE_PRIVATE).use {
-                it.write(fileContents.toByteArray())
-            }*/
-            readFromFile(context, filename)
-            /*context.openFileInput(filename).bufferedReader().useLines { lines ->
-                lines.fold("") { some, text ->
-                    println(text).toString()
-                }
-            }*/
+            val mealDB = DatabaseProvider.getDatabase(this)
+
+            setContent {
+                CalorieTrackerApp(mealDAO = mealDB.MealDAO())
+            }
         }
     }
 }
+

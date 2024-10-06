@@ -20,11 +20,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
 
-@Preview
 @Composable
-fun FoodDetailScreen() {
+fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
     var width = 200.0
     var height = 100.0
 
@@ -81,6 +81,6 @@ fun FoodDetailScreen() {
 
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Take Photo!", onClick = {})
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Upload Photo!", onClick = {})
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!", onClick = {})
+        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!", onClick = onNextButtonClicked)
     }
 }

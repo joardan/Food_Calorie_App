@@ -14,11 +14,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
 
-@Preview
 @Composable
-fun DailyCalorieIntakeScreen() {
+fun DailyCalorieIntakeScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
+    var width = 200.0
+    var height = 100.0
+    
     Column (
         modifier = Modifier
             .fillMaxSize()
@@ -31,5 +34,7 @@ fun DailyCalorieIntakeScreen() {
         Text(text = "Fats", fontSize = 25.sp)
         Text(text = "Proteins", fontSize = 25.sp)
         Text(text = "Carbohydrates", fontSize = 25.sp)
+
+        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "BACK!", onClick = onNextButtonClicked)
     }
 }
