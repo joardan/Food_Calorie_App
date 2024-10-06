@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calorietrackerapp.Database.Meal
 import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
 
@@ -81,6 +82,11 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Take Photo!", onClick = {})
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Upload Photo!", onClick = {})
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!", onClick = onNextButtonClicked)
+        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Retrieve Info!", onClick = {
+            //store some variables here so i can inserti nto dao or just collapse into one
+            //need to implement a delete/update screen too
+        })
+        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!",
+            onClick = { mealDAO.insertMeal(Meal(/*put parameters here, just do foodname and the rest will show up*/)); onNextButtonClicked()})
     }
 }

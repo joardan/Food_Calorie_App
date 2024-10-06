@@ -20,5 +20,18 @@ interface MealDAO {
     @Update
     fun updateMeal(meal: Meal)
 
+    @Query("SELECT SUM(Calories) FROM Meals")
+    fun getTotalCalories(): Float?
+
+    @Query("SELECT SUM(Protein) FROM Meals")
+    fun getTotalProtein(): Float?
+
+    @Query("SELECT SUM(Carbohydrates) FROM Meals")
+    fun getTotalCarbohydrates(): Float?
+
+    @Query("SELECT SUM(Fats) FROM Meals")
+    fun getTotalFats(): Float?
+
+//maybe need to consider suspend function id
 
 }
