@@ -48,13 +48,27 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
     var MT: String = ""
     var FN: String = ""
-    var PS: Float = 0.0F
+    var PS: Double = 0.0
+
+    var cals: Double = 0.0
+    var prot: Double = 0.0
+    var fats: Double = 0.0
+    var carbs: Double = 0.0
+
+    var portion: Double = 0.0
+
+    var PORTIONSIZETAKEN by remember { mutableStateOf(portion) }
 
 
 
     var mealType by remember { mutableStateOf(MT) }
     var foodName by remember { mutableStateOf(FN) }
     var portionSize by remember { mutableStateOf(PS) }
+
+    var calories by remember { mutableStateOf(cals) }
+    var protein by remember { mutableStateOf(prot) }
+    var fat by remember { mutableStateOf(fats) }
+    var carb by remember { mutableStateOf(carbs) }
 
     val coroutineScope = rememberCoroutineScope()
     var nutritionData by remember { mutableStateOf<NutritionResponse?>(null) }
@@ -70,8 +84,7 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
     Column (
         modifier = Modifier
-            .fillMaxSize()
-            .padding(50.dp),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -81,7 +94,7 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
             label = { Text("Meal Type") },
             textStyle = LocalTextStyle.current.copy(
                 textAlign = TextAlign.Center,
-                fontSize = 35.sp
+                fontSize = 15.sp
             ),
             modifier = Modifier
                 .size(width.dp, height.dp)
@@ -93,7 +106,7 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
             label = { Text("Food Name") },
             textStyle = LocalTextStyle.current.copy(
                 textAlign = TextAlign.Center,
-                fontSize = 35.sp
+                fontSize = 15.sp
             ),
             modifier = Modifier
                 .size(width.dp, height.dp)
@@ -101,15 +114,21 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
         TextField(
             value = portionSize.toString(),
-            onValueChange = { portionSize = it.toFloat() },
+            onValueChange = { portionSize = it.toDouble() },
             label = { Text("Portion Size (Float)") },
             textStyle = LocalTextStyle.current.copy(
                 textAlign = TextAlign.Center,
-                fontSize = 35.sp
+                fontSize = 15.sp
             ),
             modifier = Modifier
                 .size(width.dp, height.dp)
         )
+
+        Text(text = "cals: ${calories}")
+        Text(text = "protein: ${protein}")
+        Text(text = "fat: ${fat}")
+        Text(text = "carb: ${carb}")
+
 
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Take Photo!", onClick = {})
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Upload Photo!", onClick = {})
@@ -117,8 +136,18 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
             coroutineScope.launch {
                 val response = service.getNutritionInfo(apiKey, foodName)
                 if (response.isSuccessful) {
+
+                    //100g standard serving size
+                    PORTIONSIZETAKEN = portionSize / 100
+
                     nutritionData = response.body()
+                    calories = nutritionData!!.items[0].calories * PORTIONSIZETAKEN
+                    protein = nutritionData!!.items[0].protein_g * PORTIONSIZETAKEN
+                    fat = nutritionData!!.items[0].fat_total_g * PORTIONSIZETAKEN
+                    carb = nutritionData!!.items[0].carbohydrates_total_g * PORTIONSIZETAKEN
+
                     println(nutritionData)
+                    println(calories)
                 } else {
                     println("Error fetching data")
                     println(nutritionData)
@@ -126,6 +155,10 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
             }
         })
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!",
-            onClick = { mealDAO.insertMeal(Meal(/*put parameters here, just do foodname and the rest will show up*/)); onNextButtonClicked()})
+            onClick = { mealDAO.insertMeal(Meal(foodName = foodName, portion = PORTIONSIZETAKEN,
+                calories = calories, protein = protein, carbohydrates = carb, fats = fat,
+                mealType = mealType)); onNextButtonClicked()})
     }
 }
+
+

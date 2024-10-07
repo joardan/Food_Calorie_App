@@ -7,10 +7,10 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "Meals")
 data class Meal(
     @PrimaryKey @ColumnInfo(name = "FoodName") val foodName: String = "",
-    @ColumnInfo(name = "PortionSize") val portion: Float = 0.0f,
-    @ColumnInfo(name = "Calories") val calories: Float = 0.0f,
-    @ColumnInfo(name = "Protein") val protein: Float = 0.0f,
-    @ColumnInfo(name = "Carbohydrates") val carbohydrates: Float = 0.0f,
-    @ColumnInfo(name = "Fats") val fats: Float = 0.0f,
+    @ColumnInfo(name = "PortionSize") val portion: Double = 0.0,
+    @ColumnInfo(name = "Calories") val calories: Double = 0.0,
+    @ColumnInfo(name = "Protein") val protein: Double = 0.0,
+    @ColumnInfo(name = "Carbohydrates") val carbohydrates: Double = 0.0,
+    @ColumnInfo(name = "Fats") val fats: Double = 0.0,
     @ColumnInfo(name = "MealType") val mealType: String = ""
 )
