@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,9 +21,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.calorietrackerapp.API.CalorieNinjaService
+import com.example.calorietrackerapp.API.NutritionResponse
 import com.example.calorietrackerapp.Database.Meal
 import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
+
+
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+
+
 
 @Composable
 fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
@@ -33,9 +50,23 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
     var FN: String = ""
     var PS: Float = 0.0F
 
+
+
     var mealType by remember { mutableStateOf(MT) }
     var foodName by remember { mutableStateOf(FN) }
     var portionSize by remember { mutableStateOf(PS) }
+
+    val coroutineScope = rememberCoroutineScope()
+    var nutritionData by remember { mutableStateOf<NutritionResponse?>(null) }
+
+    val apiKey = "GjQeekGlBy8XhkVRRu46Gw==FzKWnNZpDuwpbodv"
+
+    val retrofit = Retrofit.Builder()
+        .baseUrl("https://api.calorieninjas.com/")
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val service = retrofit.create(CalorieNinjaService::class.java)
 
     Column (
         modifier = Modifier
@@ -83,8 +114,16 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Take Photo!", onClick = {})
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Upload Photo!", onClick = {})
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Retrieve Info!", onClick = {
-            //store some variables here so i can inserti nto dao or just collapse into one
-            //need to implement a delete/update screen too
+            coroutineScope.launch {
+                val response = service.getNutritionInfo(apiKey, foodName)
+                if (response.isSuccessful) {
+                    nutritionData = response.body()
+                    println(nutritionData)
+                } else {
+                    println("Error fetching data")
+                    println(nutritionData)
+                }
+            }
         })
         rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!",
             onClick = { mealDAO.insertMeal(Meal(/*put parameters here, just do foodname and the rest will show up*/)); onNextButtonClicked()})
