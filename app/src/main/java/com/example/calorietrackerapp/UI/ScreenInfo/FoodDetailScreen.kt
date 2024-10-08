@@ -1,11 +1,16 @@
 package com.example.calorietrackerapp.UI.ScreenInfo
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.launch
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -17,25 +22,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calorietrackerapp.API.CalorieNinjaService
 import com.example.calorietrackerapp.API.NutritionResponse
+import com.example.calorietrackerapp.AppLogic.uploadBitmapToCloudStorage
 import com.example.calorietrackerapp.Database.Meal
 import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
 
-
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.serialization.Serializable
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import kotlin.math.round
@@ -59,8 +57,6 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
     var PORTIONSIZETAKEN by remember { mutableStateOf(portion) }
 
-
-
     var mealType by remember { mutableStateOf(MT) }
     var foodName by remember { mutableStateOf(FN) }
     var portionSize by remember { mutableStateOf(PS) }
@@ -81,6 +77,21 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
         .build()
 
     val service = retrofit.create(CalorieNinjaService::class.java)
+
+    // PHOTO INTEGRATION RELATED TASKS
+    var thumbnailImage by remember { mutableStateOf<Bitmap?>(null) }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        if (bitmap != null) {
+            thumbnailImage = bitmap
+            // Update view model
+        }
+        else {
+            // Update view model
+        }
+    }
 
     Column (
         modifier = Modifier
@@ -130,15 +141,36 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
         Text(text = "carb: ${carb}")
 
 
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Take Photo!", onClick = {})
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Upload Photo!", onClick = {})
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "Retrieve Info!", onClick = {
-            coroutineScope.launch {
-                val response = service.getNutritionInfo(apiKey, foodName)
-                if (response.isSuccessful) {
+        rectangularButton (
+            height = height.toFloat(),
+            width = width.toFloat(),
+            text = "Take Photo!",
+            onClick = {
+                cameraLauncher.launch()
+            }
+        )
 
-                    //100g standard serving size
-                    PORTIONSIZETAKEN = portionSize / 100
+        thumbnailImage?.let { bitmap: Bitmap ->
+            Image (
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = "Captured Image",
+                modifier = Modifier
+                    .fillMaxWidth(1f)
+                    .height(100.dp)
+            )
+        }
+
+        rectangularButton (
+            height = height.toFloat(),
+            width = width.toFloat(),
+            text = "Retrieve Info!",
+            onClick = {
+                coroutineScope.launch {
+                    val response = service.getNutritionInfo(apiKey, foodName)
+                    if (response.isSuccessful) {
+
+                        //100g standard serving size
+                        PORTIONSIZETAKEN = portionSize / 100
 
                     nutritionData = response.body()
                     if (nutritionData != null && !nutritionData!!.items.isNullOrEmpty()) {
@@ -181,7 +213,8 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
                             protein = protein,
                             carbohydrates = carb,
                             fats = fat,
-                            mealType = mealType
+                            mealType = mealType,
+                            hasPhoto = (thumbnailImage != null)
                         ))
                     } else {
                         // Meal already exists, you can choose to update it
@@ -192,8 +225,15 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
                             protein = protein,
                             carbohydrates = carb,
                             fats = fat,
-                            mealType = mealType
+                            mealType = mealType,
+                            hasPhoto = (thumbnailImage != null)
                         ))
+                    }
+
+                    thumbnailImage?.let {
+                        if (foodName.isNotEmpty()) {
+                            uploadBitmapToCloudStorage(it, "$foodName.jpg")
+                        }
                     }
                     // Proceed to the next step
                     onNextButtonClicked()

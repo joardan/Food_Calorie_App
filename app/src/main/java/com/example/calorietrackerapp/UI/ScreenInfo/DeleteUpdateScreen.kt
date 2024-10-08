@@ -115,7 +115,7 @@ fun DeleteUpdateScreen(mealDAO: MealDAO, foodName: String, onNextButtonClicked: 
                 text = "UPDATE!",
                 onClick = { var UM = updateMeal(mealDAO = mealDAO, meal = meal!!, foodName = foodName,
                     portionSize = portionSize, calories = calories, protein = protein,
-                    carbs = carbs, fat = fat, mealType = mealType)
+                    carbs = carbs, fat = fat, mealType = mealType, hasPhoto = null)
                     mealDAO.updateMeal(UM)
                      }
             )
@@ -137,7 +137,7 @@ fun DeleteUpdateScreen(mealDAO: MealDAO, foodName: String, onNextButtonClicked: 
     }
 }
 
-fun updateMeal(mealDAO: MealDAO, meal: Meal, foodName: String, mealType: String, portionSize: Double, calories: Double, protein: Double, fat: Double, carbs: Double): Meal {
+fun updateMeal(mealDAO: MealDAO, meal: Meal, foodName: String, mealType: String, portionSize: Double, calories: Double, protein: Double, fat: Double, carbs: Double, hasPhoto: Boolean?): Meal {
     val updatedMeal = meal.copy(
         foodName = if (foodName.isNotEmpty()) foodName else meal.foodName,
         mealType = if (mealType.isNotEmpty()) mealType else meal.mealType,
@@ -145,7 +145,8 @@ fun updateMeal(mealDAO: MealDAO, meal: Meal, foodName: String, mealType: String,
         calories = if (calories != 0.0) calories else meal.calories,
         protein = if (protein != 0.0) protein else meal.protein,
         fats = if (fat != 0.0) fat else meal.fats,
-        carbohydrates = if (carbs != 0.0) carbs else meal.carbohydrates
+        carbohydrates = if (carbs != 0.0) carbs else meal.carbohydrates,
+        hasPhoto = hasPhoto ?: meal.hasPhoto
     )
     return updatedMeal
 }

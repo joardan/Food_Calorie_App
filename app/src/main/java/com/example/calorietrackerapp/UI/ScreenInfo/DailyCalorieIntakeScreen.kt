@@ -1,8 +1,12 @@
 package com.example.calorietrackerapp.UI.ScreenInfo
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.example.calorietrackerapp.AppLogic.getBitmapFromStorage
 import com.example.calorietrackerapp.Database.Meal
 import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
@@ -77,5 +83,18 @@ fun DisplayMeal(meal: Meal) {
         Text(text = "Protein : $protein", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.Blue)
         Text(text = "Carbohydrates: $carbs", fontSize = 15.sp, fontWeight = FontWeight.Normal, color = Color.Green)
         Text(text = "Fats: $fats", fontSize = 15.sp, fontWeight = FontWeight.Normal, color = Color.Green)
+
+        if (meal.hasPhoto) {
+            val imageBitmap: Bitmap? = getBitmapFromStorage("$name.jpg")
+            imageBitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
+                    contentDescription = "Food Image",
+                    modifier = Modifier
+                        .fillMaxWidth(1f)
+                        .height(100.dp)
+                )
+            }
+        }
     }
 }

@@ -12,5 +12,6 @@ data class Meal(
     @ColumnInfo(name = "Protein") val protein: Double = 0.0,
     @ColumnInfo(name = "Carbohydrates") val carbohydrates: Double = 0.0,
     @ColumnInfo(name = "Fats") val fats: Double = 0.0,
-    @ColumnInfo(name = "MealType") val mealType: String = ""
+    @ColumnInfo(name = "MealType") val mealType: String = "",
+    @ColumnInfo(name = "hasPhoto") val hasPhoto: Boolean = false
 )
