@@ -13,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.ScreenInfo.DailyCalorieIntakeScreen
+import com.example.calorietrackerapp.UI.ScreenInfo.DeleteUpdateScreen
 import com.example.calorietrackerapp.UI.ScreenInfo.FoodDetailScreen
 import com.example.calorietrackerapp.UI.ScreenInfo.MainMenuScreen
 
@@ -22,11 +23,18 @@ fun CalorieTrackerApp(mealDAO: MealDAO) {
 
     NavHost(navController = navController, startDestination = "MainMenuScreen") {
         composable(route = "MainMenuScreen") { MainMenuScreen(mealDAO = mealDAO,
-            onNextButtonClickedLogMeal = {navController.navigate("FoodDetailScreen")}, onNextButtonClickedShowMeals = {navController.navigate("DailyCalorieIntakeScreen")}) }
+            onNextButtonClickedLogMeal = {navController.navigate("FoodDetailScreen")},
+            onNextButtonClickedShowMeals = {navController.navigate("DailyCalorieIntakeScreen")},
+            onNextButtonClickedDeleteUpdateMeals = {navController.navigate("DeleteUpdateScreen")})}
+
         composable(route = "FoodDetailScreen") { FoodDetailScreen(mealDAO = mealDAO,onNextButtonClicked = {
             navController.navigate("MainMenuScreen")
         }) }
         composable(route = "DailyCalorieIntakeScreen") { DailyCalorieIntakeScreen(mealDAO = mealDAO, onNextButtonClicked = {
+            navController.navigate("MainMenuScreen")
+        }) }
+
+        composable(route = "DeleteUpdateScreen") { DeleteUpdateScreen(mealDAO = mealDAO, onNextButtonClicked = {
             navController.navigate("MainMenuScreen")
         }) }
     }

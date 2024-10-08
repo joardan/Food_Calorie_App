@@ -1,10 +1,5 @@
 package com.example.calorietrackerapp.API
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.runBlocking
 
 import kotlinx.serialization.Serializable
