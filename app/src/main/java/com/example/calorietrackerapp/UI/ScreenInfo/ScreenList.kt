@@ -5,5 +5,6 @@ enum class Screens(val title: String) {
     FoodDetailScreen(title = "FoodDetailScreen"), //reuse for breakfast lunch dinner etc
     MealScreen(title = "MealScreen"),
     DailyCalorieIntakeScreen(title = "DailyCalorieIntakeScreen"),
-    DeleteUpdateScreen(title = "DeleteUpdateScreen")
+    DeleteUpdateScreen(title = "DeleteUpdateScreen"),
+    RetrieveFood(title = "RetrieveFood")
 }

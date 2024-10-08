@@ -28,11 +28,17 @@ import com.example.calorietrackerapp.Database.MealDAO
 import com.example.calorietrackerapp.UI.*
 
 
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
+import kotlin.math.round
 
 
 @Composable
@@ -135,23 +141,66 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
                     PORTIONSIZETAKEN = portionSize / 100
 
                     nutritionData = response.body()
-                    calories = nutritionData!!.items[0].calories * PORTIONSIZETAKEN
-                    protein = nutritionData!!.items[0].protein_g * PORTIONSIZETAKEN
-                    fat = nutritionData!!.items[0].fat_total_g * PORTIONSIZETAKEN
-                    carb = nutritionData!!.items[0].carbohydrates_total_g * PORTIONSIZETAKEN
+                    if (nutritionData != null && !nutritionData!!.items.isNullOrEmpty()) {
 
-                    println(nutritionData)
-                    println(calories)
+                        //100g standard serving size
+                        PORTIONSIZETAKEN = portionSize / 100
+
+                        val firstItem = nutritionData!!.items[0]
+                        calories = round(firstItem.calories * PORTIONSIZETAKEN * 100) / 100
+                        protein = round(firstItem.protein_g * PORTIONSIZETAKEN * 100) / 100
+                        fat = round(firstItem.fat_total_g * PORTIONSIZETAKEN * 100) / 100
+                        carb = round(firstItem.carbohydrates_total_g * PORTIONSIZETAKEN * 100) / 100
+
+                        println(nutritionData)
+                        println(calories)
+                    } else {
+                        // Log or handle the case where no items are returned
+                        println("Response body is empty or items list is null.")
+                    }
                 } else {
                     println("Error fetching data")
                     println(nutritionData)
                 }
             }
         })
-        rectangularButton(height = height.toFloat(), width = width.toFloat(), text = "LOG IT!",
-            onClick = { mealDAO.insertMeal(Meal(foodName = foodName, portion = PORTIONSIZETAKEN,
-                calories = calories, protein = protein, carbohydrates = carb, fats = fat,
-                mealType = mealType)); onNextButtonClicked()})
+        rectangularButton(
+            height = height.toFloat(),
+            width = width.toFloat(),
+            text = "LOG IT!",
+            onClick = {
+                coroutineScope.launch {
+                    // Check if the meal already exists in the database
+                    val existingMeal = mealDAO.getMealByFoodName(foodName)
+                    if (existingMeal == null) {
+                        // Meal does not exist, insert the new meal
+                        mealDAO.insertMeal(Meal(
+                            foodName = foodName,
+                            portion = PORTIONSIZETAKEN,
+                            calories = calories,
+                            protein = protein,
+                            carbohydrates = carb,
+                            fats = fat,
+                            mealType = mealType
+                        ))
+                    } else {
+                        // Meal already exists, you can choose to update it
+                        mealDAO.updateMeal(Meal(
+                            foodName = foodName,
+                            portion = PORTIONSIZETAKEN,
+                            calories = calories,
+                            protein = protein,
+                            carbohydrates = carb,
+                            fats = fat,
+                            mealType = mealType
+                        ))
+                    }
+                    // Proceed to the next step
+                    onNextButtonClicked()
+                }
+            }
+        )
+
     }
 }
 

@@ -32,6 +32,9 @@ interface MealDAO {
     @Query("SELECT SUM(Fats) FROM Meals")
     fun getTotalFats(): Float?
 
+    @Query("SELECT * FROM Meals WHERE FoodName = :foodName")
+    fun getMealByFoodName(foodName: String): Meal?
+
 //maybe need to consider suspend function id
 
 }
