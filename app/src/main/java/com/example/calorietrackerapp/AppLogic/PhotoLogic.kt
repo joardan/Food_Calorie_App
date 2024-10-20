@@ -1,19 +1,19 @@
 package com.example.calorietrackerapp.AppLogic
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.telecom.Call
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
-import io.reactivex.Observable
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
+import com.google.firebase.storage.component1
+import com.google.firebase.storage.component2
+import kotlin.math.round
 
-fun uploadBitmapToCloudStorage(bitmap: Bitmap, imageName: String) {
+fun uploadBitmapToCloudStorage(bitmap: Bitmap, imageName: String, viewModel: DataViewModel, context: Context) {
     val storageRef = Firebase.storage.reference
     val imageRef = storageRef.child("images/$imageName")
 
@@ -21,11 +21,16 @@ fun uploadBitmapToCloudStorage(bitmap: Bitmap, imageName: String) {
     bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
     val data = baos.toByteArray()
 
+    // Performs the update task
     val uploadTask = imageRef.putBytes(data)
     uploadTask.addOnFailureListener {
-        Log.d("TESTTEST", "Upload Failure")
+        viewModel.updateProgressIndicator(100f)
+        Toast.makeText(context, "Failed upload.", Toast.LENGTH_SHORT).show()
     }.addOnSuccessListener {
-        Log.d("TESTTEST", "Upload Success")
+        Toast.makeText(context, "Successful upload.", Toast.LENGTH_SHORT).show()
+    }.addOnProgressListener { (transferredBytes, totalBytes) ->
+        val progress = round(transferredBytes.toFloat() / totalBytes.toFloat() * 10000f) / 100f
+        viewModel.updateProgressIndicator(progress)
     }
 }
 
@@ -51,4 +56,15 @@ fun getBitmapFromStorage(imageName: String) : Bitmap? {
 
     Log.d("TESTTEST", "Returned: ${ bitmapToReturn != null}")
     return bitmapToReturn
+}
+
+fun deleteImageFromStorage(imageName: String, context: Context) {
+    val storageRef = Firebase.storage.reference
+    val imageRef = storageRef.child("images/$imageName.jpg")
+
+    imageRef.delete().addOnSuccessListener {
+        Toast.makeText(context, "Delete From Cloud Storage Success", Toast.LENGTH_SHORT).show()
+    }.addOnFailureListener {
+        Toast.makeText(context, "Delete From Cloud Storage Failure: $imageName", Toast.LENGTH_SHORT).show()
+    }
 }

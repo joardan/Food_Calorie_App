@@ -1,33 +1,46 @@
 package com.example.calorietrackerapp.UI.ScreenInfo
 
+import android.content.res.Configuration
 import android.graphics.Bitmap
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.launch
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.calorietrackerapp.API.CalorieNinjaService
 import com.example.calorietrackerapp.API.NutritionResponse
+import com.example.calorietrackerapp.AppLogic.DataViewModel
 import com.example.calorietrackerapp.AppLogic.uploadBitmapToCloudStorage
 import com.example.calorietrackerapp.Database.Meal
 import com.example.calorietrackerapp.Database.MealDAO
@@ -40,31 +53,19 @@ import kotlin.math.round
 
 
 @Composable
-fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
-    var width = 200.0
-    var height = 100.0
+fun FoodDetailScreen(mealDAO: MealDAO, viewModel: DataViewModel, onNextButtonClicked: () -> Unit) {
+    val portrait = LocalConfiguration.current.orientation == Configuration.ORIENTATION_PORTRAIT
+    val uiState = viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
-    var MT: String = ""
-    var FN: String = ""
-    var PS: Double = 0.0
+    var mealType by remember { mutableStateOf(uiState.value.mealType) }
+    var foodName by remember { mutableStateOf(uiState.value.mealName) }
+    var portionSize by remember { mutableDoubleStateOf(uiState.value.portionSize) }
 
-    var cals: Double = 0.0
-    var prot: Double = 0.0
-    var fats: Double = 0.0
-    var carbs: Double = 0.0
-
-    var portion: Double = 0.0
-
-    var PORTIONSIZETAKEN by remember { mutableStateOf(portion) }
-
-    var mealType by remember { mutableStateOf(MT) }
-    var foodName by remember { mutableStateOf(FN) }
-    var portionSize by remember { mutableStateOf(PS) }
-
-    var calories by remember { mutableStateOf(cals) }
-    var protein by remember { mutableStateOf(prot) }
-    var fat by remember { mutableStateOf(fats) }
-    var carb by remember { mutableStateOf(carbs) }
+    var calories by remember { mutableDoubleStateOf(uiState.value.calories) }
+    var protein by remember { mutableDoubleStateOf(uiState.value.protein) }
+    var fat by remember { mutableDoubleStateOf(uiState.value.fat) }
+    var carb by remember { mutableDoubleStateOf(uiState.value.carbs) }
 
     val coroutineScope = rememberCoroutineScope()
     var nutritionData by remember { mutableStateOf<NutritionResponse?>(null) }
@@ -78,170 +79,413 @@ fun FoodDetailScreen(mealDAO: MealDAO, onNextButtonClicked: () -> Unit) {
 
     val service = retrofit.create(CalorieNinjaService::class.java)
 
-    // PHOTO INTEGRATION RELATED TASKS
-    var thumbnailImage by remember { mutableStateOf<Bitmap?>(null) }
-
+    // PHOTO INTEGRATION
+    var thumbnailImage by remember { mutableStateOf(uiState.value.bitmap) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
         if (bitmap != null) {
             thumbnailImage = bitmap
-            // Update view model
+            viewModel.updateBitmap(bitmap)
         }
         else {
-            // Update view model
+            viewModel.updateBitmap(null)
         }
     }
 
-    Column (
+    Surface (
         modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize(1f),
+        color = Color(0xFF101111)
     ) {
-        TextField(
-            value = mealType,
-            onValueChange = { mealType = it },
-            label = { Text("Meal Type") },
-            textStyle = LocalTextStyle.current.copy(
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp
-            ),
+        Column(
             modifier = Modifier
-                .size(width.dp, height.dp)
-        )
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            if (uiState.value.progressIndicator < 0.0) {
+                if (portrait) {
+                    TextField(
+                        value = mealType,
+                        onValueChange = {
+                            mealType = it
+                            viewModel.updateMealType(mealType)
+                        },
+                        label = { Text("Meal Type") },
+                        textStyle = LocalTextStyle.current.copy(
+                            textAlign = TextAlign.Center,
+                            fontSize = 15.sp
+                        ),
+                        modifier = Modifier
+                            .padding(15.dp)
+                    )
 
-        TextField(
-            value = foodName,
-            onValueChange = { foodName = it },
-            label = { Text("Food Name") },
-            textStyle = LocalTextStyle.current.copy(
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp
-            ),
-            modifier = Modifier
-                .size(width.dp, height.dp)
-        )
+                    TextField(
+                        value = foodName,
+                        onValueChange = {
+                            foodName = it
+                            viewModel.updateMealName(foodName)
+                        },
+                        label = { Text("Food Name") },
+                        textStyle = LocalTextStyle.current.copy(
+                            textAlign = TextAlign.Center,
+                            fontSize = 15.sp
+                        ),
+                        modifier = Modifier
+                            .padding(15.dp)
+                    )
 
-        TextField(
-            value = portionSize.toString(),
-            onValueChange = { portionSize = it.toDouble() },
-            label = { Text("Portion Size (Float)") },
-            textStyle = LocalTextStyle.current.copy(
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp
-            ),
-            modifier = Modifier
-                .size(width.dp, height.dp)
-        )
+                    TextField(
+                        value = portionSize.toString(),
+                        onValueChange = {
+                            portionSize = it.toDouble()
+                            viewModel.updatePortionSize(portionSize)
+                        },
+                        label = { Text("Portion Size (g) (Float)") },
+                        textStyle = LocalTextStyle.current.copy(
+                            textAlign = TextAlign.Center,
+                            fontSize = 15.sp
+                        ),
+                        modifier = Modifier
+                            .padding(15.dp)
+                    )
 
-        Text(text = "cals: ${calories}")
-        Text(text = "protein: ${protein}")
-        Text(text = "fat: ${fat}")
-        Text(text = "carb: ${carb}")
+                    FoodStatText(text = "cals: $calories")
+                    FoodStatText(text = "protein: $protein")
+                    FoodStatText(text = "fat: $fat")
+                    FoodStatText(text = "carb: $carb")
 
-
-        rectangularButton (
-            height = height.toFloat(),
-            width = width.toFloat(),
-            text = "Take Photo!",
-            onClick = {
-                cameraLauncher.launch()
-            }
-        )
-
-        thumbnailImage?.let { bitmap: Bitmap ->
-            Image (
-                bitmap = bitmap.asImageBitmap(),
-                contentDescription = "Captured Image",
-                modifier = Modifier
-                    .fillMaxWidth(1f)
-                    .height(100.dp)
-            )
-        }
-
-        rectangularButton (
-            height = height.toFloat(),
-            width = width.toFloat(),
-            text = "Retrieve Info!",
-            onClick = {
-                coroutineScope.launch {
-                    val response = service.getNutritionInfo(apiKey, foodName)
-                    if (response.isSuccessful) {
-
-                        //100g standard serving size
-                        PORTIONSIZETAKEN = portionSize / 100
-
-                    nutritionData = response.body()
-                    if (nutritionData != null && !nutritionData!!.items.isNullOrEmpty()) {
-
-                        //100g standard serving size
-                        PORTIONSIZETAKEN = portionSize / 100
-
-                        val firstItem = nutritionData!!.items[0]
-                        calories = round(firstItem.calories * PORTIONSIZETAKEN * 100) / 100
-                        protein = round(firstItem.protein_g * PORTIONSIZETAKEN * 100) / 100
-                        fat = round(firstItem.fat_total_g * PORTIONSIZETAKEN * 100) / 100
-                        carb = round(firstItem.carbohydrates_total_g * PORTIONSIZETAKEN * 100) / 100
-
-                        println(nutritionData)
-                        println(calories)
-                    } else {
-                        // Log or handle the case where no items are returned
-                        println("Response body is empty or items list is null.")
-                    }
-                } else {
-                    println("Error fetching data")
-                    println(nutritionData)
-                }
-            }
-        })
-        rectangularButton(
-            height = height.toFloat(),
-            width = width.toFloat(),
-            text = "LOG IT!",
-            onClick = {
-                coroutineScope.launch {
-                    // Check if the meal already exists in the database
-                    val existingMeal = mealDAO.getMealByFoodName(foodName)
-                    if (existingMeal == null) {
-                        // Meal does not exist, insert the new meal
-                        mealDAO.insertMeal(Meal(
-                            foodName = foodName,
-                            portion = PORTIONSIZETAKEN,
-                            calories = calories,
-                            protein = protein,
-                            carbohydrates = carb,
-                            fats = fat,
-                            mealType = mealType,
-                            hasPhoto = (thumbnailImage != null)
-                        ))
-                    } else {
-                        // Meal already exists, you can choose to update it
-                        mealDAO.updateMeal(Meal(
-                            foodName = foodName,
-                            portion = PORTIONSIZETAKEN,
-                            calories = calories,
-                            protein = protein,
-                            carbohydrates = carb,
-                            fats = fat,
-                            mealType = mealType,
-                            hasPhoto = (thumbnailImage != null)
-                        ))
+                    MenuButton(text = "Take Photo") {
+                        cameraLauncher.launch()
                     }
 
-                    thumbnailImage?.let {
-                        if (foodName.isNotEmpty()) {
-                            uploadBitmapToCloudStorage(it, "$foodName.jpg")
+                    thumbnailImage?.let { bitmap: Bitmap ->
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Captured Image",
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .height(100.dp)
+                        )
+                    }
+
+                    MenuButton(text = "Retrieve Info") {
+                        coroutineScope.launch {
+                            val response = service.getNutritionInfo(apiKey, foodName)
+                            if (response.isSuccessful) {
+                                nutritionData = response.body()
+                                if (nutritionData != null && nutritionData!!.items.isNotEmpty()) {
+
+                                    val firstItem = nutritionData!!.items[0]
+                                    calories = round(firstItem.calories * portionSize / firstItem.serving_size_g * 100) / 100
+                                    viewModel.updateCalories(calories)
+                                    protein = round(firstItem.protein_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                    viewModel.updateProtein(protein)
+                                    fat = round(firstItem.fat_total_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                    viewModel.updateFat(fat)
+                                    carb = round(firstItem.carbohydrates_total_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                    viewModel.updateCarbs(carb)
+
+                                    println(nutritionData)
+                                    println(calories)
+                                }
+                                else {
+                                    // Log or handle the case where no items are returned
+                                    println("Response body is empty or items list is null.")
+                                    Toast.makeText(context, "Failed to retrieve information for $foodName", Toast.LENGTH_SHORT).show()
+
+                                    calories = 0.0
+                                    viewModel.updateCalories(calories)
+                                    protein = 0.0
+                                    viewModel.updateProtein(protein)
+                                    fat = 0.0
+                                    viewModel.updateFat(fat)
+                                    carb = 0.0
+                                    viewModel.updateCarbs(carb)
+                                }
+                            }
+                            else {
+                                println("Error fetching data")
+                                println(nutritionData)
+                                Toast.makeText(context, "Failed to retrieve information for $foodName", Toast.LENGTH_SHORT).show()
+
+                                calories = 0.0
+                                viewModel.updateCalories(calories)
+                                protein = 0.0
+                                viewModel.updateProtein(protein)
+                                fat = 0.0
+                                viewModel.updateFat(fat)
+                                carb = 0.0
+                                viewModel.updateCarbs(carb)
+                            }
                         }
                     }
-                    // Proceed to the next step
-                    onNextButtonClicked()
+
+                    MenuButton(text = "Log it") {
+                        coroutineScope.launch {
+                            // Check if the meal already exists in the database
+                            val existingMeal = mealDAO.getMealByFoodName(foodName)
+                            if (existingMeal == null) {
+                                // Meal does not exist, insert the new meal
+                                mealDAO.insertMeal(
+                                    Meal(
+                                        foodName = foodName,
+                                        portion = portionSize,
+                                        calories = calories,
+                                        protein = protein,
+                                        carbohydrates = carb,
+                                        fats = fat,
+                                        mealType = mealType,
+                                        hasPhoto = (thumbnailImage != null)
+                                    )
+                                )
+                            }
+                            else {
+                                // Meal already exists, you can choose to update it
+                                mealDAO.updateMeal(
+                                    Meal(
+                                        foodName = foodName,
+                                        portion = portionSize,
+                                        calories = calories,
+                                        protein = protein,
+                                        carbohydrates = carb,
+                                        fats = fat,
+                                        mealType = mealType,
+                                        hasPhoto = (thumbnailImage != null)
+                                    )
+                                )
+
+                                Toast.makeText(context, "Meal already existed, updating instead.", Toast.LENGTH_SHORT).show()
+                            }
+
+                            thumbnailImage?.let {
+                                if (foodName.isNotEmpty()) {
+                                    uploadBitmapToCloudStorage(it, "$foodName.jpg", viewModel, context)
+                                }
+                            }
+
+                            if (thumbnailImage == null)
+                                onNextButtonClicked()
+                        }
+                    }
+
+                    MenuButton(text = "Back") {
+                        onNextButtonClicked()
+                    }
+                }
+                else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                    ) {
+                        TextField(
+                            value = mealType,
+                            onValueChange = {
+                                mealType = it
+                                viewModel.updateMealType(mealType)
+                            },
+                            label = { Text("Meal Type") },
+                            textStyle = LocalTextStyle.current.copy(
+                                textAlign = TextAlign.Center,
+                                fontSize = 15.sp
+                            ),
+                            modifier = Modifier
+                                .padding(15.dp)
+                        )
+
+                        TextField(
+                            value = foodName,
+                            onValueChange = {
+                                foodName = it
+                                viewModel.updateMealName(foodName)
+                            },
+                            label = { Text("Food Name") },
+                            textStyle = LocalTextStyle.current.copy(
+                                textAlign = TextAlign.Center,
+                                fontSize = 15.sp
+                            ),
+                            modifier = Modifier
+                                .padding(15.dp)
+                        )
+
+                        TextField(
+                            value = portionSize.toString(),
+                            onValueChange = {
+                                portionSize = it.toDouble()
+                                viewModel.updatePortionSize(portionSize)
+                            },
+                            label = { Text("Portion Size (g) (Float)") },
+                            textStyle = LocalTextStyle.current.copy(
+                                textAlign = TextAlign.Center,
+                                fontSize = 15.sp
+                            ),
+                            modifier = Modifier
+                                .padding(15.dp)
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                    ) {
+                        FoodStatText(text = "cals: $calories")
+                        FoodStatText(text = "protein: $protein")
+                        FoodStatText(text = "fat: $fat")
+                        FoodStatText(text = "carb: $carb")
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(1f)
+                    ) {
+                        MenuButton(text = "Take Photo") {
+                            cameraLauncher.launch()
+                        }
+
+                        MenuButton(text = "Retrieve Info") {
+                            coroutineScope.launch {
+                                val response = service.getNutritionInfo(apiKey, foodName)
+                                if (response.isSuccessful) {
+                                    nutritionData = response.body()
+                                    if (nutritionData != null && nutritionData!!.items.isNotEmpty()) {
+                                        val firstItem = nutritionData!!.items[0]
+                                        calories = round(firstItem.calories * portionSize / firstItem.serving_size_g * 100) / 100
+                                        viewModel.updateCalories(calories)
+                                        protein = round(firstItem.protein_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                        viewModel.updateProtein(protein)
+                                        fat = round(firstItem.fat_total_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                        viewModel.updateFat(fat)
+                                        carb = round(firstItem.carbohydrates_total_g * portionSize / firstItem.serving_size_g * 100) / 100
+                                        viewModel.updateCarbs(carb)
+
+                                        println(nutritionData)
+                                        println(calories)
+                                    }
+                                    else {
+                                        // Log or handle the case where no items are returned
+                                        println("Response body is empty or items list is null.")
+                                        Toast.makeText(context, "Failed to retrieve information for $foodName", Toast.LENGTH_SHORT).show()
+
+                                        calories = 0.0
+                                        viewModel.updateCalories(calories)
+                                        protein = 0.0
+                                        viewModel.updateProtein(protein)
+                                        fat = 0.0
+                                        viewModel.updateFat(fat)
+                                        carb = 0.0
+                                        viewModel.updateCarbs(carb)
+                                    }
+                                }
+                                else {
+                                    println("Error fetching data")
+                                    println(nutritionData)
+                                    Toast.makeText(context, "Failed to retrieve information for $foodName", Toast.LENGTH_SHORT).show()
+
+                                    calories = 0.0
+                                    viewModel.updateCalories(calories)
+                                    protein = 0.0
+                                    viewModel.updateProtein(protein)
+                                    fat = 0.0
+                                    viewModel.updateFat(fat)
+                                    carb = 0.0
+                                    viewModel.updateCarbs(carb)
+                                }
+                            }
+                        }
+
+                        MenuButton(text = "Log it") {
+                            coroutineScope.launch {
+                                // Check if the meal already exists in the database
+                                val existingMeal = mealDAO.getMealByFoodName(foodName)
+                                if (existingMeal == null) {
+                                    // Meal does not exist, insert the new meal
+                                    mealDAO.insertMeal(
+                                        Meal(
+                                            foodName = foodName,
+                                            portion = portionSize,
+                                            calories = calories,
+                                            protein = protein,
+                                            carbohydrates = carb,
+                                            fats = fat,
+                                            mealType = mealType,
+                                            hasPhoto = (thumbnailImage != null)
+                                        )
+                                    )
+                                } else {
+                                    // Meal already exists, you can choose to update it
+                                    mealDAO.updateMeal(
+                                        Meal(
+                                            foodName = foodName,
+                                            portion = portionSize,
+                                            calories = calories,
+                                            protein = protein,
+                                            carbohydrates = carb,
+                                            fats = fat,
+                                            mealType = mealType,
+                                            hasPhoto = (thumbnailImage != null)
+                                        )
+                                    )
+
+                                    Toast.makeText(context, "Meal already existed, updating instead.", Toast.LENGTH_SHORT).show()
+                                }
+
+                                thumbnailImage?.let {
+                                    if (foodName.isNotEmpty()) {
+                                        uploadBitmapToCloudStorage(it, "$foodName.jpg", viewModel, context)
+                                    }
+                                }
+                                if (thumbnailImage == null)
+                                    onNextButtonClicked()
+                            }
+                        }
+
+                        MenuButton(text = "Back") {
+                            onNextButtonClicked()
+                        }
+                    }
+
+                    thumbnailImage?.let { bitmap: Bitmap ->
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Captured Image",
+                            modifier = Modifier
+                                .fillMaxWidth(1f)
+                                .height(100.dp)
+                        )
+                    }
                 }
             }
-        )
-
+            else {
+                if (uiState.value.progressIndicator == 100.0f) {
+                    onNextButtonClicked()
+                } else {
+                    Text(
+                        text = "Uploading image: ${uiState.value.progressIndicator}%",
+                        fontFamily = FontFamily.Serif,
+                        color = Color.LightGray,
+                        modifier = Modifier
+                            .padding(10.dp)
+                    )
+                }
+            }
+        }
     }
+}
+
+@Composable
+fun FoodStatText(text: String) {
+    Text(
+        text = text,
+        fontFamily = FontFamily.Serif,
+        color = Color.LightGray,
+        modifier = Modifier
+            .padding(5.dp)
+    )
 }
 
 
